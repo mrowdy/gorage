@@ -1,4 +1,4 @@
-package test
+package main
 
 import (
 	"bytes"
@@ -7,17 +7,15 @@ import (
 	"log"
 	"os"
 	"testing"
-
-	"github.com/slemgrim/treasury/treasury"
 )
 
 func TestMain(m *testing.M) {
-	tempDir := "./../tmp"
+	tempDir := "./tmp"
 
 	createTempDir(tempDir)
 
 	retCode := m.Run()
-	//removeTempDir(tempDir)
+	removeTempDir(tempDir)
 	os.Exit(retCode)
 }
 
@@ -32,15 +30,15 @@ func removeTempDir(dir string) {
 }
 
 func TestWriteFileToGivenDirectory(t *testing.T) {
-	f := treasury.NewFile("derp.html", []byte("fooo"))
-	w := treasury.NewStorage("./../tmp", 6, 1024)
+	f := NewFile("derp.html", []byte("fooo"))
+	w := NewStorage("./tmp", 6, 1024)
 	err := w.Write(f)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	path := fmt.Sprintf("%s/%s/%s", "./../tmp", f.Hash()[:6], f.Hash())
+	path := fmt.Sprintf("%s/%s/%s", "./tmp", f.Hash()[:6], f.Hash())
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		log.Fatal("file not written")
@@ -48,15 +46,15 @@ func TestWriteFileToGivenDirectory(t *testing.T) {
 }
 
 func TestWriteDirectoryBasedOnWritterSetting(t *testing.T) {
-	f := treasury.NewFile("derp.html", []byte("fooo"))
-	w := treasury.NewStorage("./../tmp", 4, 1024)
+	f := NewFile("derp.html", []byte("fooo"))
+	w := NewStorage("./tmp", 4, 1024)
 	err := w.Write(f)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	path := fmt.Sprintf("%s/%s/%s", "./../tmp", f.Hash()[:4], f.Hash())
+	path := fmt.Sprintf("%s/%s/%s", "./tmp", f.Hash()[:4], f.Hash())
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		log.Fatal("file not written")
@@ -64,7 +62,7 @@ func TestWriteDirectoryBasedOnWritterSetting(t *testing.T) {
 }
 
 func TestWriteRealFile(t *testing.T) {
-	fi, err := os.Open("./../files/derp.html")
+	fi, err := os.Open("./files/derp.html")
 	if err != nil {
 		panic(err)
 	}
@@ -72,15 +70,15 @@ func TestWriteRealFile(t *testing.T) {
 	defer fi.Close()
 
 	bytes, err := ioutil.ReadAll(fi)
-	f := treasury.NewFile("file.png", bytes)
-	w := treasury.NewStorage("./../tmp", 6, 1024)
+	f := NewFile("file.png", bytes)
+	w := NewStorage("./tmp", 6, 1024)
 	err = w.Write(f)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	path := fmt.Sprintf("%s/%s/%s", "./../tmp", f.Hash()[:6], f.Hash())
+	path := fmt.Sprintf("%s/%s/%s", "./tmp", f.Hash()[:6], f.Hash())
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		log.Fatal("file not written")
@@ -88,15 +86,15 @@ func TestWriteRealFile(t *testing.T) {
 }
 
 func TestItReturnsErrorWhenPathIsNotWriteable(t *testing.T) {
-	f := treasury.NewFile("derp.html", []byte("invalid"))
-	w := treasury.NewStorage("./../invalid-path", 6, 1024)
+	f := NewFile("derp.html", []byte("invalid"))
+	w := NewStorage("./invalid-path", 6, 1024)
 	err := w.Write(f)
 
 	if err == nil {
 		log.Fatal("No error reportet")
 	}
 
-	path := fmt.Sprintf("%s/%s", "./../invalid-path", f.Hash()[:6])
+	path := fmt.Sprintf("%s/%s", "./invalid-path", f.Hash()[:6])
 
 	_, err = os.Stat(path)
 	os.IsNotExist(err)
@@ -107,17 +105,17 @@ func TestItReturnsErrorWhenPathIsNotWriteable(t *testing.T) {
 }
 
 func TestItDoesntOverwriteExistingFiles(t *testing.T) {
-	f1 := treasury.NewFile("derp.html", []byte("fooooobar"))
-	f2 := treasury.NewFile("foo.html", []byte("fooooobar"))
-	w := treasury.NewStorage("./../tmp", 6, 1024)
+	f1 := NewFile("derp.html", []byte("fooooobar"))
+	f2 := NewFile("foo.html", []byte("fooooobar"))
+	w := NewStorage("./tmp", 6, 1024)
 
 	w.Write(f1)
-	path1 := fmt.Sprintf("%s/%s/%s", "./../tmp", f1.Hash()[:6], f1.Hash())
+	path1 := fmt.Sprintf("%s/%s/%s", "./tmp", f1.Hash()[:6], f1.Hash())
 	file1, _ := os.Stat(path1)
 	m1 := file1.ModTime()
 
 	w.Write(f2)
-	path2 := fmt.Sprintf("%s/%s/%s", "./../tmp", f2.Hash()[:6], f2.Hash())
+	path2 := fmt.Sprintf("%s/%s/%s", "./tmp", f2.Hash()[:6], f2.Hash())
 	file2, _ := os.Stat(path2)
 	m2 := file2.ModTime()
 
@@ -127,7 +125,7 @@ func TestItDoesntOverwriteExistingFiles(t *testing.T) {
 }
 
 func TestErrorWhenFileDoesntExist(t *testing.T) {
-	w := treasury.NewStorage("./../tmp", 6, 1024)
+	w := NewStorage("./tmp", 6, 1024)
 	_, err := w.Read("asdfasdfasdf")
 
 	if err == nil {
@@ -136,8 +134,8 @@ func TestErrorWhenFileDoesntExist(t *testing.T) {
 }
 
 func TestBasicReadWrite(t *testing.T) {
-	f1 := treasury.NewFile("Test", []byte("TestBasicReadWrite"))
-	w := treasury.NewStorage("./../tmp", 6, 1024)
+	f1 := NewFile("Test", []byte("TestBasicReadWrite"))
+	w := NewStorage("./tmp", 6, 1024)
 
 	w.Write(f1)
 	f2, _ := w.Read(f1.Hash())

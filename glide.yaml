@@ -1,4 +1,4 @@
-package: github.com/slemgrim/treasury
+package: github.com/slemgrim/gorage
 import:
 - package: github.com/jinzhu/gorm
   version: ^1.0.0

@@ -1,4 +1,4 @@
-package treasury
+package main
 
 import (
 	"crypto/sha1"

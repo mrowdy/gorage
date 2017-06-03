@@ -1,4 +1,4 @@
-package treasury
+package main
 
 import (
 	"bufio"
