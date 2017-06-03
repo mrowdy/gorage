@@ -33,7 +33,9 @@ func removeTempDir(dir string) {
 }
 
 func TestWriteFileToGivenDirectory(t *testing.T) {
-	f := gorage.NewFile("test-file.html", []byte("fooo"))
+	f := &gorage.File{Content: []byte("Test")}
+	f.Hash = f.CalculateHash()
+
 	w := Io{
 		BasePath:   tempDir,
 		DirLength:  6,
@@ -45,7 +47,7 @@ func TestWriteFileToGivenDirectory(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	path := fmt.Sprintf("%s/%s/%s", tempDir, f.Hash()[:6], f.Hash())
+	path := fmt.Sprintf("%s/%s/%s", tempDir, f.Hash[:6], f.Hash)
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		log.Fatal("file not written")
@@ -53,7 +55,9 @@ func TestWriteFileToGivenDirectory(t *testing.T) {
 }
 
 func TestWriteDirectoryBasedOnWritterSetting(t *testing.T) {
-	f := gorage.NewFile("test-file.html", []byte("fooo"))
+	f := &gorage.File{Content: []byte("Test")}
+	f.Hash = f.CalculateHash()
+
 	w := Io{
 		BasePath:   tempDir,
 		DirLength:  4,
@@ -66,7 +70,7 @@ func TestWriteDirectoryBasedOnWritterSetting(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	path := fmt.Sprintf("%s/%s/%s", tempDir, f.Hash()[:4], f.Hash())
+	path := fmt.Sprintf("%s/%s/%s", tempDir, f.Hash[:4], f.Hash)
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		log.Fatal("file not written")
@@ -82,7 +86,9 @@ func TestWriteRealFile(t *testing.T) {
 	defer fi.Close()
 
 	bytes, err := ioutil.ReadAll(fi)
-	f := gorage.NewFile("file.png", bytes)
+	f := &gorage.File{Content: bytes}
+	f.Hash = f.CalculateHash()
+
 	w := Io{
 		BasePath:   tempDir,
 		DirLength:  6,
@@ -95,7 +101,7 @@ func TestWriteRealFile(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	path := fmt.Sprintf("%s/%s/%s", tempDir, f.Hash()[:6], f.Hash())
+	path := fmt.Sprintf("%s/%s/%s", tempDir, f.Hash[:6], f.Hash)
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		log.Fatal("file not written")
@@ -103,7 +109,9 @@ func TestWriteRealFile(t *testing.T) {
 }
 
 func TestItReturnsErrorWhenPathIsNotWriteable(t *testing.T) {
-	f := gorage.NewFile("test-file.html", []byte("invalid"))
+	f := &gorage.File{Content: []byte("Test")}
+	f.Hash = f.CalculateHash()
+
 	w := Io{
 		BasePath:   "invalid-path",
 		DirLength:  6,
@@ -116,7 +124,7 @@ func TestItReturnsErrorWhenPathIsNotWriteable(t *testing.T) {
 		log.Fatal("No error reportet")
 	}
 
-	path := fmt.Sprintf("%s/%s", "./invalid-path", f.Hash()[:6])
+	path := fmt.Sprintf("%s/%s", "./invalid-path", f.Hash[:6])
 
 	_, err = os.Stat(path)
 	os.IsNotExist(err)
@@ -127,8 +135,12 @@ func TestItReturnsErrorWhenPathIsNotWriteable(t *testing.T) {
 }
 
 func TestItDoesntOverwriteExistingFiles(t *testing.T) {
-	f1 := gorage.NewFile("test-file.html", []byte("fooooobar"))
-	f2 := gorage.NewFile("test-file2.html", []byte("fooooobar"))
+	f1 := &gorage.File{Content: []byte("Test")}
+	f1.Hash = f1.CalculateHash()
+
+	f2 := &gorage.File{Content: []byte("Test")}
+	f2.Hash = f2.CalculateHash()
+
 	w := Io{
 		BasePath:   tempDir,
 		DirLength:  6,
@@ -136,12 +148,12 @@ func TestItDoesntOverwriteExistingFiles(t *testing.T) {
 	}
 
 	w.Write(f1)
-	path1 := fmt.Sprintf("%s/%s/%s", tempDir, f1.Hash()[:6], f1.Hash())
+	path1 := fmt.Sprintf("%s/%s/%s", tempDir, f1.Hash[:6], f1.Hash)
 	file1, _ := os.Stat(path1)
 	m1 := file1.ModTime()
 
 	w.Write(f2)
-	path2 := fmt.Sprintf("%s/%s/%s", tempDir, f2.Hash()[:6], f2.Hash())
+	path2 := fmt.Sprintf("%s/%s/%s", tempDir, f2.Hash[:6], f2.Hash)
 	file2, _ := os.Stat(path2)
 	m2 := file2.ModTime()
 
@@ -164,7 +176,9 @@ func TestErrorWhenFileDoesntExist(t *testing.T) {
 }
 
 func TestBasicReadWrite(t *testing.T) {
-	f1 := gorage.NewFile("Test", []byte("TestBasicReadWrite"))
+	f1 := &gorage.File{Content: []byte("Test")}
+	f1.Hash = f1.CalculateHash()
+
 	w := Io{
 		BasePath:   tempDir,
 		DirLength:  6,
@@ -172,9 +186,9 @@ func TestBasicReadWrite(t *testing.T) {
 	}
 
 	w.Write(f1)
-	f2, _ := w.Read(f1.Hash())
+	content, _ := w.Read(f1.Hash)
 
-	if bytes.Compare(f1.Content, f2.Content) != 0 {
+	if bytes.Compare(f1.Content, content) != 0 {
 		log.Fatal("write and read doesn't work")
 	}
 }

@@ -6,18 +6,18 @@ import (
 )
 
 func TestGetNameFromFile(t *testing.T) {
-	f := NewFile("file.png", []byte("Test"))
-	if f.Hash() == "" {
+	f := File{Content: []byte("Test")}
+	if f.CalculateHash() == "" {
 		log.Fatal("Files should return a name")
 	}
 }
 
 func TestDifferentFilesHAveDifferentNames(t *testing.T) {
-	fA := NewFile("file.png", []byte("Test"))
-	nameA := fA.Hash()
+	fA := File{Content: []byte("Test")}
+	nameA := fA.CalculateHash()
 
-	fB := NewFile("file.png", []byte("Bar"))
-	nameB := fB.Hash()
+	fB := File{Content: []byte("Bar")}
+	nameB := fB.CalculateHash()
 
 	if nameA == nameB {
 		log.Fatal("Files should have different names")
@@ -25,11 +25,11 @@ func TestDifferentFilesHAveDifferentNames(t *testing.T) {
 }
 
 func TestSameFileSameName(t *testing.T) {
-	fA := NewFile("file.png", []byte("Test"))
-	nameA := fA.Hash()
+	fA := File{Content: []byte("Test")}
+	nameA := fA.CalculateHash()
 
-	fB := NewFile("file.png", []byte("Test"))
-	nameB := fB.Hash()
+	fB := File{Content: []byte("Test")}
+	nameB := fB.CalculateHash()
 
 	if nameA != nameB {
 		log.Fatal("Files should have same name")
@@ -37,9 +37,9 @@ func TestSameFileSameName(t *testing.T) {
 }
 
 func TestNameShouldAlwaysBeTheSame(t *testing.T) {
-	f := NewFile("file.png", []byte("Test"))
-	nameA := f.Hash()
-	nameB := f.Hash()
+	f := File{Content: []byte("Test")}
+	nameA := f.CalculateHash()
+	nameB := f.CalculateHash()
 
 	if nameA != nameB {
 		log.Fatal("Files should have same name")

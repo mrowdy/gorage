@@ -18,17 +18,14 @@ type Io struct {
 }
 
 func (s Io) Write(file *gorage.File) error {
-
-	fileHash := file.Hash()
-
-	dir := s.getDirPath(fileHash)
+	dir := s.getDirPath(file.Hash)
 	err := createDir(dir)
 
 	if err != nil {
 		return err
 	}
 
-	path := s.getFilePath(fileHash)
+	path := s.getFilePath(file.Hash)
 	fo, err := os.Create(path)
 	if err != nil {
 		return err
@@ -61,10 +58,13 @@ func (s Io) Write(file *gorage.File) error {
 	return nil
 }
 
-func (s Io) Read(hash string) (gorage.File, error) {
+func (s Io) Read(hash string) (gorage.FileContent, error) {
 	fi, err := os.Open(s.getFilePath(hash))
+
+	var empty gorage.FileContent
+
 	if err != nil {
-		return gorage.File{}, err
+		return empty, err
 	}
 
 	defer fi.Close()
@@ -72,13 +72,10 @@ func (s Io) Read(hash string) (gorage.File, error) {
 	bytes, err := ioutil.ReadAll(fi)
 
 	if err != nil {
-		return gorage.File{}, err
+		return empty, err
 	}
 
-	file := new(gorage.File)
-	file.Content = bytes
-
-	return *file, nil
+	return bytes, nil
 }
 
 func createDir(dir string) error {

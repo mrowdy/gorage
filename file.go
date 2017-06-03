@@ -5,19 +5,16 @@ import (
 	"fmt"
 )
 
+type FileContent []byte
+
 type File struct {
-	name    string
-	Content []byte
+	ID      string
+	Name    string
+	Hash    string
+	Content FileContent
 }
 
-func NewFile(name string, content []byte) *File {
-	file := new(File)
-	file.name = name
-	file.Content = content
-	return file
-}
-
-func (f *File) Hash() string {
+func (f *File) CalculateHash() string {
 	h := sha1.New()
 	h.Write(f.Content)
 	return fmt.Sprintf("%x", h.Sum(nil))
