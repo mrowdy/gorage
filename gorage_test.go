@@ -55,6 +55,16 @@ func TestSaveWritesToStorage(t *testing.T) {
 	gorage := NewGorage(s, p)
 	gorage.Save("./files/derp.html")
 	if s.HasBeenWritten == false {
+		t.Fatal("Should persist file")
+	}
+}
+
+func TestDontPersistFiles(t *testing.T) {
+	s := new(MockStorage)
+	p := new(MockPersistance)
+	gorage := NewGorage(s, p)
+	gorage.Save("./files/derp.html")
+	if p.HasBeenSaved == false {
 		t.Fatal("Should save file with storage")
 	}
 }

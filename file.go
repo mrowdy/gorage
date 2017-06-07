@@ -8,10 +8,12 @@ import (
 type FileContent []byte
 
 type File struct {
-	ID      string
-	Name    string
-	Hash    string
-	Content FileContent
+	ID       string
+	Name     string
+	Hash     string
+	MimeType string
+	Content  FileContent
+	Size     int
 }
 
 func (f *File) CalculateHash() string {

@@ -80,7 +80,7 @@ func (s Io) Read(hash string) (gorage.FileContent, error) {
 
 func createDir(dir string) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		error := os.Mkdir(dir, 0777)
+		error := os.MkdirAll(dir, 0755)
 		if error != nil {
 			return error
 		}
