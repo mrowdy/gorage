@@ -23,7 +23,7 @@ Write File:
         - content uuid
         - original-name
         - create date
-        - delete date
+        - delete date    
 #return file object
 
 Read File
@@ -51,3 +51,18 @@ Delete File
     ##no
         delete file from fs
         mark content table entry as deleted
+
+
+
+
+1: storage
+    file content
+
+2: relation
+    size
+    mime-type
+    hash
+3: meta
+    file-name
+    upload-date
+

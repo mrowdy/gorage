@@ -8,165 +8,471 @@ import (
 type MockStorage struct {
 	HasBeenWritten bool
 	HasBeenRead    bool
+	HasBeenDeleted bool
+	DeletedId      string
 	Content        FileContent
+	File           File
 }
 
-func (s *MockStorage) Write(file *File) error {
+func (s *MockStorage) Write(file File) error {
 	s.HasBeenWritten = true
+	s.File = file
 	return nil
 }
 
-func (s *MockStorage) Read(id string) (FileContent, error) {
+func (s *MockStorage) Read(hash string) (FileContent, error) {
 	s.HasBeenRead = true
 	return s.Content, nil
 }
 
-type MockPersistance struct {
-	FilePersisted bool
-	FileExists    bool
-	HasBeenSaved  bool
-	HasBeenLoaded bool
-	Hash          bool
-	File          *File
-}
-
-func (p *MockPersistance) Save(file *File) error {
-	p.HasBeenSaved = true
+func (s *MockStorage) Delete(hash string) error {
+	s.HasBeenDeleted = true
+	s.DeletedId = hash
 	return nil
 }
 
-func (p *MockPersistance) Load(id string) (File, error) {
-	p.HasBeenLoaded = true
+type MockMetaRepo struct {
+	HasBeenSaved   bool
+	HasBeenLoaded  bool
+	HasBeenDeleted bool
+	SaveID         string
+	LoadID         string
+	DeleteID       string
+	MetaExists     bool
+	References     int
+}
 
-	if p.FilePersisted == false {
-		return *new(File), errors.New("File not found")
+func (m *MockMetaRepo) Save(file Meta) (Meta, error) {
+	m.HasBeenSaved = true
+	return Meta{}, nil
+}
+func (m *MockMetaRepo) Load(id string) (Meta, error) {
+	m.HasBeenLoaded = true
+
+	if m.MetaExists == false {
+		return Meta{}, errors.New("file doesn't exist")
 	}
 
-	return *p.File, nil
+	return Meta{}, nil
+}
+func (m *MockMetaRepo) Delete(id string) error {
+	m.HasBeenDeleted = true
+	m.DeleteID = id
+	return nil
+}
+func (m *MockMetaRepo) HashExists(id string) bool {
+	return m.References > 0
 }
 
-func (p *MockPersistance) HashExists(hash string) bool {
-	return p.FileExists
+type MockRelationRepo struct {
+	HasBeenSaved   bool
+	HasBeenLoaded  bool
+	HasBeenDeleted bool
+	HasBeenChecked bool
+	SaveID         string
+	LoadID         string
+	DeleteID       string
+	FileExists     bool
 }
 
-func TestSaveWritesToStorage(t *testing.T) {
+func (m *MockRelationRepo) Save(file Relation) (Relation, error) {
+	m.HasBeenSaved = true
+	return Relation{}, nil
+}
+func (m *MockRelationRepo) Load(hash string) (Relation, error) {
+	m.HasBeenLoaded = true
+
+	if m.FileExists == false {
+		return Relation{}, errors.New("file doesn't exist")
+	}
+
+	return Relation{}, nil
+}
+func (m *MockRelationRepo) Delete(hash string) error {
+	m.HasBeenDeleted = true
+	return nil
+}
+func (m *MockRelationRepo) HashExists(hash string) bool {
+	m.HasBeenChecked = true
+	return m.FileExists
+}
+
+func TestStoreFile(t *testing.T) {
 	s := new(MockStorage)
-	p := new(MockPersistance)
-	gorage := NewGorage(s, p)
-	gorage.Save("./files/derp.html")
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+	gorage := NewGorage(s, r, m)
+	gorage.Save("test", FileContent("foo"))
 	if s.HasBeenWritten == false {
 		t.Fatal("Should persist file")
 	}
 }
 
-func TestDontPersistFiles(t *testing.T) {
+func TestStoreFileChecksIfFileExists(t *testing.T) {
 	s := new(MockStorage)
-	p := new(MockPersistance)
-	gorage := NewGorage(s, p)
-	gorage.Save("./files/derp.html")
-	if p.HasBeenSaved == false {
-		t.Fatal("Should save file with storage")
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	gorage := NewGorage(s, r, m)
+	gorage.Save("test", FileContent("foo"))
+	if r.HasBeenChecked != true {
+		t.Fatal("Should check if file exists")
 	}
 }
 
-func TestNotSavingDuplicateFiles(t *testing.T) {
+func TestDontStoreExistingFiles(t *testing.T) {
 	s := new(MockStorage)
-	p := new(MockPersistance)
-	p.FileExists = true
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
 
-	gorage := NewGorage(s, p)
-	gorage.Save("./files/derp.html")
+	r.FileExists = true
+
+	gorage := NewGorage(s, r, m)
+	gorage.Save("test", FileContent("foo"))
 
 	if s.HasBeenWritten == true {
-		t.Fatal("dont write duplicate files")
+		t.Fatal("Should store existing files")
 	}
 }
 
-func TestErrorWhenFileIsNotPersisted(t *testing.T) {
+func TestSaveWholeFileContent(t *testing.T) {
 	s := new(MockStorage)
-	p := new(MockPersistance)
-	p.FilePersisted = false
-	gorage := NewGorage(s, p)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
 
-	_, err := gorage.Load("13123")
-	if err == nil {
-		t.Fatal("it should return err when files are not persisted")
-	}
-}
+	r.FileExists = true
 
-func TestStorageShouldNotReadUnpersistedFiles(t *testing.T) {
-	s := new(MockStorage)
-	p := new(MockPersistance)
-	p.FilePersisted = false
-	gorage := NewGorage(s, p)
+	name := "foo"
+	body := []byte("test")
 
-	gorage.Load("13123")
-	if s.HasBeenRead == true {
-		t.Fatal("it shouldn't try to read unpersisted fils")
-	}
-}
+	gorage := NewGorage(s, r, m)
+	f, _ := gorage.Save(name, body)
 
-func TestReturnsDataFromPersistanceLayer(t *testing.T) {
-	s := new(MockStorage)
-	p := new(MockPersistance)
-
-	f := new(File)
-	f.ID = "1234"
-
-	p.FilePersisted = true
-	p.File = f
-
-	gorage := NewGorage(s, p)
-
-	file, err := gorage.Load("13123")
-
-	if err != nil {
-		t.Fatal("unexpected error")
+	if f.Name != name {
+		t.Fatal("name not set")
 	}
 
-	if f.ID != file.ID {
-		t.Fatal("file not returned from persistance layer")
-	}
-}
-
-func TestLoadsExistingFilesFromStorage(t *testing.T) {
-	s := new(MockStorage)
-	p := new(MockPersistance)
-	f := new(File)
-
-	p.FileExists = true
-	p.FilePersisted = true
-	p.File = f
-	gorage := NewGorage(s, p)
-	gorage.Load("sadfasdf")
-	if s.HasBeenRead == false {
-		t.Fatal("id not set")
-
-	}
-}
-
-func TestContentwillBeSet(t *testing.T) {
-	s := new(MockStorage)
-	s.Content = []byte("Content")
-
-	p := new(MockPersistance)
-
-	f := new(File)
-	f.ID = "1234"
-
-	p.FilePersisted = true
-	p.File = f
-
-	gorage := NewGorage(s, p)
-
-	file, err := gorage.Load("13123")
-
-	if err != nil {
-		t.Fatal("unexpected error")
-	}
-
-	if !testEq(s.Content, file.Content) {
+	if !testEq(f.Content, body) {
 		t.Fatal("content not set")
+	}
+}
+
+func TestSaveFileToRelationsRepo(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	name := "foo"
+	body := []byte("test")
+
+	gorage := NewGorage(s, r, m)
+	gorage.Save(name, body)
+
+	if r.HasBeenSaved != true {
+		t.Fatal("Should save to repo")
+	}
+}
+
+func TestDontSaveExistingFiles(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	r.FileExists = true
+
+	name := "foo"
+	body := []byte("test")
+
+	gorage := NewGorage(s, r, m)
+	gorage.Save(name, body)
+
+	if r.HasBeenSaved == true {
+		t.Fatal("Should not save to repo")
+	}
+}
+
+func TestLoadsFromStorageIfFileExists(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	r.FileExists = true
+
+	name := "foo"
+	body := []byte("test")
+
+	gorage := NewGorage(s, r, m)
+	gorage.Save(name, body)
+
+	if r.HasBeenLoaded != true {
+		t.Fatal("Should have been loaded")
+	}
+}
+
+func TestCreatesMetaForNewFiles(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	name := "foo"
+	body := []byte("test")
+
+	gorage := NewGorage(s, r, m)
+	gorage.Save(name, body)
+
+	if m.HasBeenSaved != true {
+		t.Fatal("Should have been saved to meta")
+	}
+}
+
+func TestCreatesMetaForExistingFiles(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	r.FileExists = true
+
+	name := "foo"
+	body := []byte("test")
+
+	gorage := NewGorage(s, r, m)
+	gorage.Save(name, body)
+
+	if m.HasBeenSaved != true {
+		t.Fatal("Should have been saved to meta")
+	}
+}
+
+func TestDeleteChecksIfFileExistsInMeta(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	gorage := NewGorage(s, r, m)
+	gorage.Delete("test")
+
+	if m.HasBeenLoaded != true {
+		t.Fatal("should load file from meta")
+	}
+}
+
+func TestDeleteReturnsErrorIfFileDoesntExist(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	gorage := NewGorage(s, r, m)
+	err := gorage.Delete("test")
+
+	if err == nil {
+		t.Fatal("should return error")
+	}
+}
+
+func TestItLoadsFileFromRelations(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	gorage := NewGorage(s, r, m)
+	gorage.Delete("test")
+
+	if r.HasBeenLoaded == false {
+		t.Fatal("should have been loaded")
+	}
+}
+
+func TestItShouldntLoadFromRelationIfNoMetaExists(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = false
+	gorage := NewGorage(s, r, m)
+	gorage.Delete("test")
+
+	if r.HasBeenLoaded == true {
+		t.Fatal("should not have been loaded")
+	}
+}
+
+func TestItShouldReturnErrorIfRelationDoesntExist(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	r.FileExists = false
+	gorage := NewGorage(s, r, m)
+	err := gorage.Delete("test")
+
+	if err == nil {
+		t.Fatal("should return error")
+	}
+}
+
+func TestItShouldDeleteExistingFilesFromMeta(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	r.FileExists = true
+	gorage := NewGorage(s, r, m)
+	gorage.Delete("test")
+
+	if m.HasBeenDeleted == false || m.DeleteID != "test" {
+		t.Fatal("should have been deleted")
+	}
+}
+
+func TestItShouldDeleteRelationIfNotExists(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	m.References = 0
+	r.FileExists = true
+
+	gorage := NewGorage(s, r, m)
+	gorage.Delete("test")
+
+	if r.HasBeenDeleted == false {
+		t.Fatal("should have been deleted")
+	}
+}
+
+func TestItShouldDeleteDeleteFileIfLastRefrence(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	m.References = 0
+	r.FileExists = true
+
+	gorage := NewGorage(s, r, m)
+	gorage.Delete("test")
+
+	if s.HasBeenDeleted == false {
+		t.Fatal("should have been deleted")
+	}
+}
+
+func TestItShouldNotDeleteRelationIfMoreReferencesExist(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	m.References = 2
+	r.FileExists = true
+
+	gorage := NewGorage(s, r, m)
+	gorage.Delete("test")
+
+	if r.HasBeenDeleted == true {
+		t.Fatal("should have been deleted")
+	}
+}
+
+func TestItShouldNotDeleteDeleteFileIfNotLastRefrence(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	m.References = 2
+	r.FileExists = true
+
+	gorage := NewGorage(s, r, m)
+	gorage.Delete("test")
+
+	if s.HasBeenDeleted == true {
+		t.Fatal("should not have been deleted")
+	}
+}
+
+func TestItShouldReturnErrorIfMetaDoesNotExist(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = false
+	r.FileExists = false
+
+	gorage := NewGorage(s, r, m)
+	_, err := gorage.Load("1234")
+
+	if err == nil {
+		t.Fatal("should return error")
+	}
+}
+
+func TestItShouldNotReturnErrorIfMetaExist(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	r.FileExists = true
+
+	gorage := NewGorage(s, r, m)
+	_, err := gorage.Load("1234")
+
+	if err != nil {
+		t.Fatal("should not return error")
+	}
+}
+
+func TestItShouldReturnErrorWhenRelationNotExist(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	r.FileExists = false
+
+	gorage := NewGorage(s, r, m)
+	_, err := gorage.Load("1234")
+
+	if err == nil {
+		t.Fatal("should return error")
+	}
+}
+
+func TestShouldLoadFromStorageIfFileExists(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = true
+	r.FileExists = true
+
+	gorage := NewGorage(s, r, m)
+	gorage.Load("1234")
+
+	if s.HasBeenRead == false {
+		t.Fatal("should read from storage")
+	}
+}
+
+func TestShouldNotLoadFromStorageIfFileDoesNotExists(t *testing.T) {
+	s := new(MockStorage)
+	m := new(MockMetaRepo)
+	r := new(MockRelationRepo)
+
+	m.MetaExists = false
+	r.FileExists = false
+
+	gorage := NewGorage(s, r, m)
+	gorage.Load("1234")
+
+	if s.HasBeenRead == true {
+		t.Fatal("should not read from storage")
 	}
 }
 

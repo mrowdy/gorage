@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/Slemgrim/gorage"
-	"github.com/Slemgrim/gorage/persistance"
+	"github.com/Slemgrim/gorage/meta"
+	"github.com/Slemgrim/gorage/relation"
 	"github.com/Slemgrim/gorage/storage"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -17,22 +18,23 @@ func main() {
 	}
 	defer db.Close()
 
-	storage := storage.Io{
+	s := storage.Io{
 		BasePath:   "./examples/tmp",
 		DirLength:  6,
 		BufferSize: 1024,
 	}
 
-	persistance := persistance.Db{
-		Db: db,
-	}
-	persistance.Init()
+	r := relation.NewDb("relation", db)
+	m := meta.NewDb("meta", db)
 
-	gorage := gorage.NewGorage(storage, persistance)
-	file, err := gorage.Save("./examples/example-files/test-file.html")
+	gorage := gorage.NewGorage(s, r, m)
+
+	savedFile, err := gorage.Save("test-file", []byte("File Content"))
+
+	loadedFile, err := gorage.Load(savedFile.ID)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("%+v\n", file)
+	fmt.Println(string(loadedFile.Content))
 }

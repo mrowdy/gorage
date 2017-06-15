@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/Slemgrim/gorage"
 	"github.com/Slemgrim/gorage/meta"
 	"github.com/Slemgrim/gorage/relation"
@@ -29,10 +27,18 @@ func main() {
 
 	gorage := gorage.NewGorage(s, r, m)
 
-	file, err := gorage.Save("test-file", []byte("File Content"))
+	savedFile, err := gorage.Save("test-file", []byte("File Content"))
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("%+v\n", file)
+	err = gorage.Delete(savedFile.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = gorage.Load(savedFile.ID)
+	if err != nil {
+		panic(err)
+	}
 }

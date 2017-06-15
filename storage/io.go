@@ -17,7 +17,7 @@ type Io struct {
 	BufferSize int
 }
 
-func (s Io) Write(file *gorage.File) error {
+func (s Io) Write(file gorage.File) error {
 	dir := s.getDirPath(file.Hash)
 	err := createDir(dir)
 
@@ -78,6 +78,22 @@ func (s Io) Read(hash string) (gorage.FileContent, error) {
 	return bytes, nil
 }
 
+func (s Io) Delete(hash string) error {
+	file := s.getFilePath(hash)
+	directory := s.getDirPath(hash)
+	err := os.Remove(file)
+
+	if err != nil {
+		return err
+	}
+
+	if isEmpty, err := s.IsEmpty(directory); err == nil && isEmpty == true {
+		err = os.Remove(directory)
+	}
+
+	return err
+}
+
 func createDir(dir string) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		error := os.MkdirAll(dir, 0755)
@@ -102,4 +118,18 @@ func (s *Io) getFilePath(hash string) string {
 	path = append(path, hash[:s.DirLength])
 	path = append(path, hash)
 	return strings.Join(path, "/")
+}
+
+func (s *Io) IsEmpty(path string) (bool, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err
 }

@@ -33,8 +33,8 @@ func removeTempDir(dir string) {
 }
 
 func TestWriteFileToGivenDirectory(t *testing.T) {
-	f := &gorage.File{Content: []byte("Test")}
-	f.Hash = f.CalculateHash()
+	f := gorage.File{Content: []byte("Test")}
+	f.Hash = f.Content.CalculateHash()
 
 	w := Io{
 		BasePath:   tempDir,
@@ -55,8 +55,8 @@ func TestWriteFileToGivenDirectory(t *testing.T) {
 }
 
 func TestWriteDirectoryBasedOnWritterSetting(t *testing.T) {
-	f := &gorage.File{Content: []byte("Test")}
-	f.Hash = f.CalculateHash()
+	f := gorage.File{Content: []byte("Test")}
+	f.Hash = f.Content.CalculateHash()
 
 	w := Io{
 		BasePath:   tempDir,
@@ -86,8 +86,8 @@ func TestWriteRealFile(t *testing.T) {
 	defer fi.Close()
 
 	bytes, err := ioutil.ReadAll(fi)
-	f := &gorage.File{Content: bytes}
-	f.Hash = f.CalculateHash()
+	f := gorage.File{Content: bytes}
+	f.Hash = f.Content.CalculateHash()
 
 	w := Io{
 		BasePath:   tempDir,
@@ -109,11 +109,11 @@ func TestWriteRealFile(t *testing.T) {
 }
 
 func TestItReturnsErrorWhenPathIsNotWriteable(t *testing.T) {
-	f := &gorage.File{Content: []byte("Test")}
-	f.Hash = f.CalculateHash()
+	f := gorage.File{Content: []byte("Test")}
+	f.Hash = f.Content.CalculateHash()
 
 	w := Io{
-		BasePath:   "invalid-path",
+		BasePath:   "/invalid-path",
 		DirLength:  6,
 		BufferSize: 1024,
 	}
@@ -121,7 +121,7 @@ func TestItReturnsErrorWhenPathIsNotWriteable(t *testing.T) {
 	err := w.Write(f)
 
 	if err == nil {
-		log.Fatal("No error reportet")
+		log.Fatal("No error reported")
 	}
 
 	path := fmt.Sprintf("%s/%s", "./invalid-path", f.Hash[:6])
@@ -130,16 +130,16 @@ func TestItReturnsErrorWhenPathIsNotWriteable(t *testing.T) {
 	os.IsNotExist(err)
 
 	if err == nil {
-		log.Fatal("No error reportet")
+		log.Fatal("No error reported")
 	}
 }
 
 func TestItDoesntOverwriteExistingFiles(t *testing.T) {
-	f1 := &gorage.File{Content: []byte("Test")}
-	f1.Hash = f1.CalculateHash()
+	f1 := gorage.File{Content: []byte("Test")}
+	f1.Hash = f1.Content.CalculateHash()
 
-	f2 := &gorage.File{Content: []byte("Test")}
-	f2.Hash = f2.CalculateHash()
+	f2 := gorage.File{Content: []byte("Test")}
+	f2.Hash = f2.Content.CalculateHash()
 
 	w := Io{
 		BasePath:   tempDir,
@@ -176,8 +176,8 @@ func TestErrorWhenFileDoesntExist(t *testing.T) {
 }
 
 func TestBasicReadWrite(t *testing.T) {
-	f1 := &gorage.File{Content: []byte("Test")}
-	f1.Hash = f1.CalculateHash()
+	f1 := gorage.File{Content: []byte("Test")}
+	f1.Hash = f1.Content.CalculateHash()
 
 	w := Io{
 		BasePath:   tempDir,
