@@ -1,8 +1,6 @@
 package gorage
 
 import (
-	"crypto/sha1"
-	"fmt"
 	"time"
 )
 
@@ -15,12 +13,7 @@ type File struct {
 	MimeType   string
 	Content    FileContent
 	Size       int
+	Context    interface{}
 	UploadedAt time.Time
 	DeletedAt  *time.Time
-}
-
-func (f *FileContent) CalculateHash() string {
-	h := sha1.New()
-	h.Write(*f)
-	return fmt.Sprintf("%x", h.Sum(nil))
 }

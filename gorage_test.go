@@ -102,7 +102,7 @@ func TestStoreFile(t *testing.T) {
 	m := new(MockMetaRepo)
 	r := new(MockRelationRepo)
 	gorage := NewGorage(s, r, m)
-	gorage.Save("test", FileContent("foo"))
+	gorage.Save("test", FileContent("foo"), nil)
 	if s.HasBeenWritten == false {
 		t.Fatal("Should persist file")
 	}
@@ -114,7 +114,7 @@ func TestStoreFileChecksIfFileExists(t *testing.T) {
 	r := new(MockRelationRepo)
 
 	gorage := NewGorage(s, r, m)
-	gorage.Save("test", FileContent("foo"))
+	gorage.Save("test", FileContent("foo"), nil)
 	if r.HasBeenChecked != true {
 		t.Fatal("Should check if file exists")
 	}
@@ -128,7 +128,7 @@ func TestDontStoreExistingFiles(t *testing.T) {
 	r.FileExists = true
 
 	gorage := NewGorage(s, r, m)
-	gorage.Save("test", FileContent("foo"))
+	gorage.Save("test", FileContent("foo"), nil)
 
 	if s.HasBeenWritten == true {
 		t.Fatal("Should store existing files")
@@ -146,7 +146,7 @@ func TestSaveWholeFileContent(t *testing.T) {
 	body := []byte("test")
 
 	gorage := NewGorage(s, r, m)
-	f, _ := gorage.Save(name, body)
+	f, _ := gorage.Save(name, body, nil)
 
 	if f.Name != name {
 		t.Fatal("name not set")
@@ -166,7 +166,7 @@ func TestSaveFileToRelationsRepo(t *testing.T) {
 	body := []byte("test")
 
 	gorage := NewGorage(s, r, m)
-	gorage.Save(name, body)
+	gorage.Save(name, body, nil)
 
 	if r.HasBeenSaved != true {
 		t.Fatal("Should save to repo")
@@ -184,7 +184,7 @@ func TestDontSaveExistingFiles(t *testing.T) {
 	body := []byte("test")
 
 	gorage := NewGorage(s, r, m)
-	gorage.Save(name, body)
+	gorage.Save(name, body, nil)
 
 	if r.HasBeenSaved == true {
 		t.Fatal("Should not save to repo")
@@ -202,7 +202,7 @@ func TestLoadsFromStorageIfFileExists(t *testing.T) {
 	body := []byte("test")
 
 	gorage := NewGorage(s, r, m)
-	gorage.Save(name, body)
+	gorage.Save(name, body, nil)
 
 	if r.HasBeenLoaded != true {
 		t.Fatal("Should have been loaded")
@@ -218,7 +218,7 @@ func TestCreatesMetaForNewFiles(t *testing.T) {
 	body := []byte("test")
 
 	gorage := NewGorage(s, r, m)
-	gorage.Save(name, body)
+	gorage.Save(name, body, nil)
 
 	if m.HasBeenSaved != true {
 		t.Fatal("Should have been saved to meta")
@@ -236,7 +236,7 @@ func TestCreatesMetaForExistingFiles(t *testing.T) {
 	body := []byte("test")
 
 	gorage := NewGorage(s, r, m)
-	gorage.Save(name, body)
+	gorage.Save(name, body, nil)
 
 	if m.HasBeenSaved != true {
 		t.Fatal("Should have been saved to meta")

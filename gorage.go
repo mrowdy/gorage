@@ -1,17 +1,25 @@
 package gorage
 
 import (
+	"crypto/sha1"
 	"errors"
+	"fmt"
 	"net/http"
-	"time"
 )
 
+/*
+* Gorage is an abstraction for file IO which can save a lot of disk space by preventing the storage of same files.
+* It achieves this by splitting the file content and meta data.
+ */
 type Gorage struct {
 	Storage      Storage
 	MetaRepo     MetaRepo
 	RelationRepo RelationRepo
 }
 
+/*
+* Create a new instance of Gorage with given drivers
+ */
 func NewGorage(storage Storage, relationRepo RelationRepo, metaRepo MetaRepo) *Gorage {
 	gorage := new(Gorage)
 	gorage.Storage = storage
@@ -20,12 +28,16 @@ func NewGorage(storage Storage, relationRepo RelationRepo, metaRepo MetaRepo) *G
 	return gorage
 }
 
-func (g Gorage) Save(name string, body []byte) (File, error) {
+/*
+* Save a file with its body and content. It returns a File object with all the relevant meta data and an error
+* in case the file could not be saved
+ */
+func (g Gorage) Save(name string, body []byte, context interface{}) (File, error) {
 	content := FileContent(body)
 	f := File{}
 	f.Name = name
 	f.Content = content
-	f.Hash = content.CalculateHash()
+	f.Hash = calculateHash(content)
 	f.MimeType = getMymeType(content)
 	f.Size = len(content)
 
@@ -63,6 +75,7 @@ func (g Gorage) Save(name string, body []byte) (File, error) {
 	m := Meta{}
 	m.Name = f.Name
 	m.Hash = r.Hash
+	m.Context = context
 	m, err := g.MetaRepo.Save(m)
 
 	if err != nil {
@@ -77,6 +90,10 @@ func (g Gorage) Save(name string, body []byte) (File, error) {
 
 }
 
+/*
+* Load a file by an ID. It returns a File object with all the relevant meta data and an error
+* in case the file could not be saved
+ */
 func (g Gorage) Load(id string) (File, error) {
 
 	m, mErr := g.MetaRepo.Load(id)
@@ -103,6 +120,7 @@ func (g Gorage) Load(id string) (File, error) {
 		Name:       m.Name,
 		MimeType:   r.MimeType,
 		Size:       r.Size,
+		Context:    m.Context,
 		DeletedAt:  m.DeletedAt,
 		UploadedAt: m.CreatedAt,
 	}
@@ -110,10 +128,9 @@ func (g Gorage) Load(id string) (File, error) {
 	return f, nil
 }
 
-func getMymeType(f FileContent) string {
-	return http.DetectContentType(f)
-}
-
+/*
+* Delete a file by its ID. Returns an error if file can't be deleted or was already deleted
+ */
 func (g Gorage) Delete(id string) error {
 	m, mErr := g.MetaRepo.Load(id)
 	if mErr != nil {
@@ -141,32 +158,12 @@ func (g Gorage) Delete(id string) error {
 	return nil
 }
 
-type MetaRepo interface {
-	Save(file Meta) (Meta, error)
-	Load(id string) (Meta, error)
-	Delete(id string) error
-	HashExists(id string) bool
+func getMymeType(f FileContent) string {
+	return http.DetectContentType(f)
 }
 
-type Meta struct {
-	ID        string
-	Hash      string
-	CreatedAt time.Time
-	DeletedAt *time.Time
-	Name      string
-}
-
-type RelationRepo interface {
-	Save(file Relation) (Relation, error)
-	Load(hash string) (Relation, error)
-	Delete(hash string) error
-	HashExists(hash string) bool
-}
-
-type Relation struct {
-	CreatedAt time.Time
-	DeletedAt *time.Time
-	Hash      string
-	MimeType  string
-	Size      int
+func calculateHash(f FileContent) string {
+	h := sha1.New()
+	h.Write(f)
+	return fmt.Sprintf("%x", h.Sum(nil))
 }

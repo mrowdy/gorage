@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"encoding/json"
+
 	"github.com/Slemgrim/gorage"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
@@ -24,10 +26,10 @@ func NewDb(table string, db *gorm.DB) *Db {
 }
 
 func (db Db) Save(m gorage.Meta) (gorage.Meta, error) {
-
 	meta := new(metaTable)
 	meta.Name = m.Name
 	meta.Hash = m.Hash
+	meta.Context, _ = json.Marshal(m.Context)
 
 	result := db.Db.Create(meta)
 	if result.Error != nil {
@@ -51,11 +53,22 @@ func (db Db) Load(id string) (gorage.Meta, error) {
 	}, id).First(&m).RecordNotFound()
 
 	if !notFound {
+
+		var context interface{}
+		err := json.Unmarshal(m.Context, &context)
+
+		if err != nil {
+			panic(err)
+			return meta, err
+		}
+
 		meta.ID = m.ID
 		meta.Name = m.Name
 		meta.Hash = m.Hash
 		meta.CreatedAt = m.CreatedAt
 		meta.DeletedAt = m.DeletedAt
+		meta.Context = context
+
 		return meta, nil
 	}
 
@@ -101,4 +114,5 @@ type metaTable struct {
 	UpdatedAt time.Time
 	DeletedAt *time.Time
 	Name      string
+	Context   []byte
 }
