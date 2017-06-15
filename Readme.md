@@ -10,7 +10,7 @@ Usage
 
 Save a file by providing a filename and its content as byte slice
 ``` golang
-savedFile, err := gorage.Save(filepath.Base(filename.txt), []byte("the content"), nil)
+savedFile, err := gorage.Save("filename.txt", []byte("the content"), nil)
 ```
 
 Load a file by providing its ID which was generated during saving
@@ -54,7 +54,7 @@ You can save some custom data as context alongside a file
 context = make(map[string]string)
 context["foo"] = bar
 
-savedFile, err := gorage.Save(filepath.Base(filename.txt), []byte("the content"), context)
+savedFile, err := gorage.Save("filename.txt", []byte("the content"), context)
 ```
 
 Context is of type ```interface{}``` and can be everything
