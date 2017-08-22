@@ -9,21 +9,21 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type Db struct {
+type Sql struct {
 	Db *gorm.DB
 }
 
-var tableName = "gorage_mate"
+var tableName = "gorage_meta"
 
-func NewDb(table string, db *gorm.DB) *Db {
+func NewSql(table string, db *gorm.DB) *Sql {
 	tableName = table
 	db.AutoMigrate(&relationTable{})
-	Db := new(Db)
+	Db := new(Sql)
 	Db.Db = db
 	return Db
 }
 
-func (db Db) Save(r gorage.Relation) (gorage.Relation, error) {
+func (db Sql) Save(r gorage.Relation) (gorage.Relation, error) {
 
 	relation, found := db.getRelation(r.Hash)
 
@@ -45,7 +45,7 @@ func (db Db) Save(r gorage.Relation) (gorage.Relation, error) {
 	return r, nil
 }
 
-func (db Db) Load(hash string) (gorage.Relation, error) {
+func (db Sql) Load(hash string) (gorage.Relation, error) {
 	r := relationTable{}
 	relation := gorage.Relation{}
 	notFound := db.Db.Where(relationTable{
@@ -66,7 +66,7 @@ func (db Db) Load(hash string) (gorage.Relation, error) {
 
 }
 
-func (db Db) Delete(hash string) error {
+func (db Sql) Delete(hash string) error {
 	result := db.Db.Where(relationTable{
 		Hash:      hash,
 		DeletedAt: nil,
@@ -79,7 +79,7 @@ func (db Db) Delete(hash string) error {
 	return nil
 }
 
-func (db Db) HashExists(hash string) bool {
+func (db Sql) HashExists(hash string) bool {
 	relation := relationTable{}
 	result := db.Db.Where(&relationTable{Hash: hash}).First(&relation)
 
@@ -90,7 +90,7 @@ func (db Db) HashExists(hash string) bool {
 	return true
 }
 
-func (db Db) getRelation(hash string) (*relationTable, bool) {
+func (db Sql) getRelation(hash string) (*relationTable, bool) {
 	relation := new(relationTable)
 	found := false
 
