@@ -16,7 +16,7 @@ import (
 /*
 * Example for writing, reading and deleting files with gorage
  */
-func main() {
+func mongo() {
 	// Create a new storage instance. The actual files will be stored inside storage. Gorage includes a fs storage but it
 	// would be easily possible to write other storage drivers for memcache, redis, etc.
 	s := storage.Io{

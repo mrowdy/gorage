@@ -17,7 +17,7 @@ import (
 /*
 * Example for writing, reading and deleting files with gorage
  */
-func main() {
+func sql() {
 	db, err := gorm.Open("mysql", "gorage:gorage@tcp(192.168.99.100:32768)/gorage?charset=utf8&parseTime=True")
 	if err != nil {
 		panic("failed to connect database")
