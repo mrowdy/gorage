@@ -3,16 +3,15 @@ package meta
 import (
 	"errors"
 	"github.com/Slemgrim/gorage"
+	"github.com/google/uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/google/uuid"
 	"time"
 )
 
 type Mongo struct {
 	Collection *mgo.Collection
 }
-
 
 func (db Mongo) Save(m gorage.Meta) (gorage.Meta, error) {
 	t := time.Now()
@@ -61,7 +60,7 @@ func (db Mongo) Delete(id string) error {
 func (db Mongo) HashExists(hash string) bool {
 
 	r := new(gorage.Relation)
-	err := db.Collection.Find(bson.M{"hash": hash, "deletedat":nil}).One(r)
+	err := db.Collection.Find(bson.M{"hash": hash, "deletedat": nil}).One(r)
 	if err != nil {
 		return false
 	}
