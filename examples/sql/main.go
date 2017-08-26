@@ -18,8 +18,27 @@ import (
 * Example for writing, reading and deleting files with gorage
  */
 func main() {
-	//Setup a new gorage instance
-	gorage := setup()
+	db, err := gorm.Open("mysql", "gorage:gorage@tcp(192.168.99.100:32768)/gorage?charset=utf8&parseTime=True")
+	if err != nil {
+		panic("failed to connect database")
+	}
+
+	// Create a new storage instance. The actual files will be stored inside storage. Gorage includes a fs storage but it
+	// would be easily possible to write other storage drivers for memcache, redis, etc.
+	s := storage.Io{
+		BasePath:   "./examples/tmp",
+		DirLength:  6,
+		BufferSize: 1024,
+	}
+
+	//The relation instance keeps a one to one relation between the stored file and its charakteristics (filesize, mime-type, etc)
+	r := relation.NewSql("relation", db)
+
+	//The meta instance handles the different uploaded files. When you upload 2 files with the same content
+	//they will be both available through the meta instance. (filename, upload date, etc., context)
+	m := meta.NewSql("meta", db)
+
+	gorage := gorage.NewGorage(s, r, m)
 
 	//Load an existing file into a byte buffer (gorage only works with byte buffers)
 	filename := "./examples/test-file.html"
@@ -74,31 +93,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-}
-
-func setup() *gorage.Gorage {
-	db, err := gorm.Open("mysql", "gorage:gorage@/gorage?charset=utf8&parseTime=True&loc=Local")
-	if err != nil {
-		panic("failed to connect database")
-	}
-
-	// Create a new storage instance. The actual files will be stored inside storage. Gorage includes a fs storage but it
-	// would be easily possible to write other storage drivers for memcache, redis, etc.
-	s := storage.Io{
-		BasePath:   "./examples/tmp",
-		DirLength:  6,
-		BufferSize: 1024,
-	}
-
-	//The relation instance keeps a one to one relation between the stored file and its charakteristics (filesize, mime-type, etc)
-	r := relation.NewDb("relation", db)
-
-	//The meta instance handles the different uploaded files. When you upload 2 files with the same content
-	//they will be both available through the meta instance. (filename, upload date, etc., context)
-	m := meta.NewDb("meta", db)
-
-	gorage := gorage.NewGorage(s, r, m)
-
-	return gorage
 }

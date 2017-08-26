@@ -13,19 +13,19 @@ import (
 
 var tableName = "gorage_relations"
 
-type Db struct {
+type Sql struct {
 	Db *gorm.DB
 }
 
-func NewDb(table string, db *gorm.DB) *Db {
+func NewSql(table string, db *gorm.DB) *Sql {
 	tableName = table
 	db.AutoMigrate(&metaTable{})
-	Db := new(Db)
+	Db := new(Sql)
 	Db.Db = db
 	return Db
 }
 
-func (db Db) Save(m gorage.Meta) (gorage.Meta, error) {
+func (db Sql) Save(m gorage.Meta) (gorage.Meta, error) {
 	meta := new(metaTable)
 	meta.Name = m.Name
 	meta.Hash = m.Hash
@@ -43,7 +43,7 @@ func (db Db) Save(m gorage.Meta) (gorage.Meta, error) {
 	return m, nil
 }
 
-func (db Db) Load(id string) (gorage.Meta, error) {
+func (db Sql) Load(id string) (gorage.Meta, error) {
 	m := metaTable{}
 	meta := gorage.Meta{}
 
@@ -75,7 +75,7 @@ func (db Db) Load(id string) (gorage.Meta, error) {
 	return meta, errors.New("Meta not found")
 }
 
-func (db Db) Delete(id string) error {
+func (db Sql) Delete(id string) error {
 	result := db.Db.Where(metaTable{
 		ID:        id,
 		DeletedAt: nil,
@@ -88,7 +88,7 @@ func (db Db) Delete(id string) error {
 	return nil
 }
 
-func (db Db) HashExists(hash string) bool {
+func (db Sql) HashExists(hash string) bool {
 	count := 0
 	db.Db.Model(&metaTable{}).Where(&metaTable{
 		Hash:      hash,

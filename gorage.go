@@ -42,7 +42,6 @@ func (g Gorage) Save(name string, body []byte, context interface{}) (File, error
 	f.Size = len(content)
 
 	fileExists := g.RelationRepo.HashExists(f.Hash)
-
 	r := Relation{}
 
 	if !fileExists {
