@@ -10,13 +10,19 @@ import (
 	"github.com/Slemgrim/gorage/meta"
 	"github.com/Slemgrim/gorage/relation"
 	"github.com/Slemgrim/gorage/storage"
-	"gopkg.in/mgo.v2"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 /*
 * Example for writing, reading and deleting files with gorage
  */
-func mongo() {
+func main() {
+	db, err := gorm.Open("mysql", "gorage:gorage@tcp(192.168.99.100:32768)/gorage?charset=utf8&parseTime=True")
+	if err != nil {
+		panic("failed to connect database")
+	}
+
 	// Create a new storage instance. The actual files will be stored inside storage. Gorage includes a fs storage but it
 	// would be easily possible to write other storage drivers for memcache, redis, etc.
 	s := storage.Io{
@@ -25,25 +31,12 @@ func mongo() {
 		BufferSize: 1024,
 	}
 
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:    []string{"192.168.99.100:32771"},
-		Database: "gorage",
-		Username: "",
-		Password: "",
-	}
-
-	session, err := mgo.DialWithInfo(mongoDBDialInfo)
-	if err != nil {
-		panic(err)
-	}
-	defer session.Close()
-
 	//The relation instance keeps a one to one relation between the stored file and its charakteristics (filesize, mime-type, etc)
-	r := relation.Mongo{Collection: session.DB("gorage").C("relation")}
+	r := relation.NewSql("relation", db)
 
 	//The meta instance handles the different uploaded files. When you upload 2 files with the same content
 	//they will be both available through the meta instance. (filename, upload date, etc., context)
-	m := meta.Mongo{Collection: session.DB("gorage").C("meta")}
+	m := meta.NewSql("meta", db)
 
 	gorage := gorage.NewGorage(s, r, m)
 
