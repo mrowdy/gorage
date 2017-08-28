@@ -1,4 +1,4 @@
-package: github.com/slemgrim/gorage
+package: github.com/Slemgrim/gorage
 import:
 - package: github.com/jinzhu/gorm
   version: ^1.0.0

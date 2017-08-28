@@ -6,10 +6,10 @@ import (
 
 	"path/filepath"
 
-	"github.com/slemgrim/gorage"
-	"github.com/slemgrim/gorage/meta"
-	"github.com/slemgrim/gorage/relation"
-	"github.com/slemgrim/gorage/storage"
+	"github.com/Slemgrim/gorage"
+	"github.com/Slemgrim/gorage/meta"
+	"github.com/Slemgrim/gorage/relation"
+	"github.com/Slemgrim/gorage/storage"
 	"gopkg.in/mgo.v2"
 )
 

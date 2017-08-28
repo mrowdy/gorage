@@ -6,7 +6,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/slemgrim/gorage"
+	"github.com/Slemgrim/gorage"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )

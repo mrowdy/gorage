@@ -2,7 +2,7 @@ package relation
 
 import (
 	"errors"
-	"github.com/slemgrim/gorage"
+	"github.com/Slemgrim/gorage"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"

@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/slemgrim/gorage"
+	"github.com/Slemgrim/gorage"
 )
 
 type Io struct {
