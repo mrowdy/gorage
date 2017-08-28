@@ -5,7 +5,7 @@ import (
 
 	"errors"
 
-	"github.com/Slemgrim/gorage"
+	"github.com/slemgrim/gorage"
 	"github.com/jinzhu/gorm"
 )
 

@@ -2,7 +2,7 @@ package meta
 
 import (
 	"errors"
-	"github.com/Slemgrim/gorage"
+	"github.com/slemgrim/gorage"
 	"github.com/google/uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
